@@ -1,0 +1,3 @@
+/home/qubit/elementary_Compiler/build/CMakeFiles/elementary.dir
+/home/qubit/elementary_Compiler/build/CMakeFiles/edit_cache.dir
+/home/qubit/elementary_Compiler/build/CMakeFiles/rebuild_cache.dir

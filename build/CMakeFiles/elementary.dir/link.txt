@@ -1,0 +1,1 @@
+/usr/bin/gcc -rdynamic CMakeFiles/elementary.dir/src/main.c.o -o elementary 
