@@ -2,8 +2,9 @@
 #define Lexer
 
 typedef enum {
-  Token_Identifier, // Variable Name
-  Token_Keyword,    // Like int, String, print
+  Token_Identifier,  // Variable Name
+  Token_TypeKeyword, // Like int, String, print
+  Token_FunctionKeyword,
   Token_Number,
   Token_String,
   Token_Operator,

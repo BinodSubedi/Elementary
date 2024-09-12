@@ -14,10 +14,23 @@
 */
 
 static bool isKeyword(const char *val) {
-  if (strcmp(val, "int") || strcmp(val, "u8") || strcmp(val, "print")) {
+  if (strcmp(val, "int") == 0 || strcmp(val, "u8") == 0 ||
+      strcmp(val, "print") == 0) {
     return true;
   }
+
   return false;
+}
+
+static TokenType identifierKeywordFilter(const char *val) {
+  if (isKeyword(val)) {
+    if (strcmp(val, "int") == 0 || strcmp(val, "u8") == 0) {
+      return Token_TypeKeyword;
+    } else if (strcmp(val, "print") == 0) {
+      return Token_FunctionKeyword;
+    }
+  }
+  return Token_Identifier;
 }
 
 static bool isOperator(const char *val) {
@@ -55,11 +68,46 @@ Token getNextToken(const char *code,
 
     val[endPos + 1] = '\0';
 
+    token.type = identifierKeywordFilter(val);
+    strcpy(token.value, val);
+
+    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
+           token.value, *TK_Index);
+    return token;
+  }
+
+  if (isdigit(code[*TK_Index])) {
+    char val[16] = "";
+    int startPos = *TK_Index;
+    int endPos = startPos;
+
+    val[0] = code[startPos];
+    *TK_Index = *TK_Index + 1;
+    while (isdigit(code[endPos + 1])) {
+      endPos++;
+      *TK_Index = *TK_Index + 1;
+      val[endPos - startPos] = code[endPos];
+    }
+
+    val[endPos + 1] = '\0';
+
     token.type = Token_Number;
     strcpy(token.value, val);
 
     printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
            token.value, *TK_Index);
+    return token;
+  }
+
+  if ((code[*TK_Index] == '=')) {
+    char val[16] = "=\0";
+    token.type = Token_Assign;
+    strcpy(token.value, val);
+    *TK_Index = *TK_Index + 1;
+
+    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
+           token.value, *TK_Index);
+
     return token;
   }
 
