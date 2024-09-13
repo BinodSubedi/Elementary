@@ -8,7 +8,7 @@ int main(int argsNum, char *args[]) {
     printf("number of args: %d, and first user argument is: %s\n", argsNum,
            args[1]);
 
-    const char *code = "int a = 12";
+    const char *code = "main(){int a = 12;}";
 
     int a = 0;
 
