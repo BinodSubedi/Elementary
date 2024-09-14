@@ -15,12 +15,15 @@ static bool isKeyword(const char *val) {
 
 static TokenType identifierKeywordFilter(const char *val) {
   if (isKeyword(val)) {
-    if (strcmp(val, "int") == 0 || strcmp(val, "u8") == 0) {
+    if (strcmp(val, "int") == 0 || strcmp(val, "u8") == 0 ||
+        strcmp(val, "void") == 0) {
       return Token_TypeKeyword;
     } else if (strcmp(val, "print") == 0) {
       return Token_FunctionKeyword;
     } else if (strcmp(val, "main") == 0) {
       return Token_MainFunction;
+    } else if (strcmp(val, "return") == 0) {
+      return Token_ReturnKeyword;
     }
   }
   return Token_Identifier;
@@ -95,6 +98,16 @@ Token getNextToken(const char *code,
     val[0] = '}';
     val[1] = '\0';
     token.type = Token_RBraces;
+    strcpy(token.value, val);
+    *TK_Index = *TK_Index + 1;
+    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
+           token.value, *TK_Index);
+    return token;
+    break;
+  case ',':
+    val[0] = ',';
+    val[1] = '\0';
+    token.type = Token_Comma;
     strcpy(token.value, val);
     *TK_Index = *TK_Index + 1;
     printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
