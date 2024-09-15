@@ -6,11 +6,13 @@
 
 // In future we can create AST struct having ASTNode inside it, so
 // that we have head and tail and don't have to rebuild broken connections
-// Ok, I guess I have to now
+// Ok, I guess I have to do that now
 
 // TODO:: Clean up list
-// The ast malloc allocation
-// All the ASTNodes allocations
+// 1.) The ast malloc allocation
+// 2.) All the ASTNodes allocations
+// 3.) Make be create a node initialization function
+//
 typedef struct Node {
 
   TokenType type;
@@ -41,6 +43,17 @@ void nextNode(const char *code, int *const TK_Index) {
   current_token = getNextToken(code, TK_Index);
 }
 
+void parseAssignment(const char *code, int *const TK_Index) {
+  ASTNode *node = malloc(sizeof(ASTNode));
+
+  // Here I probably have to check up with presence of bracket and
+  // step by step simplify / and * expression into just + and - expression
+};
+
+void parseBracesInternals(const char *code, int *const TK_Index) {
+  ASTNode *node = malloc(sizeof(ASTNode));
+};
+
 // Probably need conditional and loop paren parser, we will do that later
 
 void parseLFuntionParenInternals(
@@ -50,15 +63,40 @@ void parseLFuntionParenInternals(
   // we gonna still pass from here to BracesInternals
   // where both function internal and scoped eleements will be
   // analyzed and with closing braces, it will return the node
-  ASTNode *node = malloc(sizeof(ASTNode));
 
   if (current_token.type == Token_TypeKeyword) {
 
     // Looping until all parameters inside
     while (current_token.type == Token_TypeKeyword) {
-      node->left = NULL;
-      node->type = Token_TypeKeyword;
-      strcpy(node->val, current_token.value);
+      nextNode(code, TK_Index);
+      if (current_token.type == Token_Identifier) {
+        ASTNode *node = malloc(sizeof(ASTNode));
+        node->right = NULL;
+        node->type = Token_TypeKeyword;
+        strcpy(node->val, current_token.value);
+
+        node->left = ast->tail;
+        ast->tail->right = node;
+        ast->tail = node;
+        nextNode(code, TK_Index);
+        if (current_token.type == Token_Comma) {
+          // ignore comma
+          nextNode(code, TK_Index);
+        } else if (current_token.type == Token_RParen) {
+          nextNode(code, TK_Index);
+          if (current_token.type == Token_LBraces) {
+
+            nextNode(code, TK_Index);
+            parseBracesInternals(code, TK_Index);
+
+          } else {
+
+            // Error out here, expected curly braces
+          }
+        } else {
+          // Error out because here something went wrong
+        }
+      }
     }
 
   } else {
@@ -77,12 +115,6 @@ void parseExpressionParenInternals() { // Possibly by expression it means
   ASTNode *node = malloc(sizeof(ASTNode));
 };
 
-void parseBracesInternals() { ASTNode *node = malloc(sizeof(ASTNode)); };
-
-void parseAssignment(const char *code, int *const TK_Index) {
-  ASTNode *node = malloc(sizeof(ASTNode));
-};
-
 ASTNode *parseTerm(const char *code, int *const TK_Index) {
   ASTNode *node = malloc(sizeof(ASTNode));
 
@@ -97,35 +129,27 @@ ASTNode *parseTerm(const char *code, int *const TK_Index) {
 
     nextNode(code, TK_Index);
 
-    ASTNode *newNode1 = malloc(
+    ASTNode *newNode = malloc(
         sizeof(ASTNode)); // for filtering between identifier and LabelKeyword
-    ASTNode *newNode2 = malloc(sizeof(ASTNode));
 
-    newNode1->left = newNode1->right = NULL; // Just initializing with null
-    newNode2->left = newNode2->right = NULL;
+    newNode->left = newNode->right = NULL; // Just initializing with null
 
-    strcpy(newNode1->val, current_token.value);
+    strcpy(newNode->val, current_token.value);
 
-    newNode1->left = ast->tail;
-    ast->tail->right = newNode1;
-    ast->tail = newNode1;
+    newNode->left = ast->tail;
+    ast->tail->right = newNode;
+    ast->tail = newNode;
 
     nextNode(code, TK_Index);
 
-    // newNode1->right = newNode2;
-
-    strcpy(newNode2->val, current_token.value);
-    newNode2->type = current_token.type;
-
-    // Setting newNode1 label type either be functionLabel or identifier
-    if (strcmp(newNode2->val, "(") == 0) {
-      newNode1->type = Token_LabelKeyword;
+    // Setting newNode label type either be functionLabel or identifier
+    // By the way, we ignore the token "(" or "=" cause we are only using them
+    // to properly identify function labels or normal variable name
+    if (strcmp(current_token.value, "(") == 0) {
+      newNode->type = Token_LabelKeyword;
       // Possibly checking in with parseLBracesInternal
       // TODO: Here some work is do be done possibly calling
       // parseLBracesInternal Function
-      newNode2->left = ast->tail;
-      ast->tail->right = newNode2;
-      ast->tail = newNode2;
 
       nextNode(code, TK_Index);
       // Don't need to do below because we already have pointer to the newNode2
@@ -133,14 +157,11 @@ ASTNode *parseTerm(const char *code, int *const TK_Index) {
       // newNode2->right = parseLFuntionParenInternals(code, TK_Index);
       parseLFuntionParenInternals(code, TK_Index);
 
-    } else if (strcmp(newNode2->val, "=") == 0) {
-      newNode1->type = Token_Identifier;
+    } else if (strcmp(current_token.value, "=") == 0) {
+      newNode->type = Token_Identifier;
       // will be returned from outer return statement
       // but need to pass to parseAssignment function to build whole
       // section code unit
-      newNode2->left = ast->tail;
-      ast->tail->right = newNode2;
-      ast->tail = newNode2;
 
       nextNode(code, TK_Index);
       parseAssignment(code, TK_Index);
