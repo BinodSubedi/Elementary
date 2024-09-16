@@ -35,6 +35,7 @@ typedef struct {
 // ast is initialized in parseCode function and will be freed after getting code
 // in generate unit cause we also need to check for function existence and
 // no-use kind of a error detection and optimization
+// We need to do the same for variable as we don't want to create duplicates
 AST *ast;
 Token current_token;
 bool mainEntered = false;
@@ -43,6 +44,21 @@ void nextNode(const char *code, int *const TK_Index) {
   current_token = getNextToken(code, TK_Index);
 }
 
+// we will do this later, first let's see if everthing initially works or not
+void parseCFuntionParenInternals() { // Its Call function paren internals,means
+                                     // when
+                                     // calling function
+  ASTNode *node = malloc(sizeof(ASTNode));
+};
+
+//************************************************
+
+void parseExpressionParenInternals() { // like with int a = (2+3)/3, here in
+                                       // this expression 2+3 is handled here
+
+  ASTNode *node = malloc(sizeof(ASTNode));
+};
+
 void parseAssignment(const char *code, int *const TK_Index) {
   ASTNode *node = malloc(sizeof(ASTNode));
 
@@ -50,9 +66,14 @@ void parseAssignment(const char *code, int *const TK_Index) {
   // step by step simplify / and * expression into just + and - expression
 };
 
+//************************************************
+
+/*
 void parseBracesInternals(const char *code, int *const TK_Index) {
+
   ASTNode *node = malloc(sizeof(ASTNode));
 };
+*/
 
 // Probably need conditional and loop paren parser, we will do that later
 
@@ -87,7 +108,6 @@ void parseLFuntionParenInternals(
           if (current_token.type == Token_LBraces) {
 
             nextNode(code, TK_Index);
-            parseBracesInternals(code, TK_Index);
 
           } else {
 
@@ -102,17 +122,6 @@ void parseLFuntionParenInternals(
   } else {
     // error out with message
   }
-};
-
-void parseCFuntionParenInternals() { // Its Call function paren internals,means
-                                     // when
-                                     // calling function
-  ASTNode *node = malloc(sizeof(ASTNode));
-};
-
-void parseExpressionParenInternals() { // Possibly by expression it means
-                                       // loops and conditional
-  ASTNode *node = malloc(sizeof(ASTNode));
 };
 
 ASTNode *parseTerm(const char *code, int *const TK_Index) {
@@ -156,6 +165,8 @@ ASTNode *parseTerm(const char *code, int *const TK_Index) {
       // in [struct AST] ast tail
       // newNode2->right = parseLFuntionParenInternals(code, TK_Index);
       parseLFuntionParenInternals(code, TK_Index);
+      // after calling this, we can run parseTerm again
+      parseTerm(code, TK_Index);
 
     } else if (strcmp(current_token.value, "=") == 0) {
       newNode->type = Token_Identifier;
@@ -165,9 +176,32 @@ ASTNode *parseTerm(const char *code, int *const TK_Index) {
 
       nextNode(code, TK_Index);
       parseAssignment(code, TK_Index);
+      parseTerm(code, TK_Index);
     }
   } else if (current_token.type == Token_Identifier) {
     // Here we see about assignment or whatever
+
+    node->type = Token_Identifier;
+    node->right = NULL;
+    strcpy(node->val, current_token.value);
+    node->left = ast->tail;
+    ast->tail = node;
+    nextNode(code, TK_Index);
+
+    if (strcmp(current_token.value, "=") == 0) {
+
+      // pass to parseAssignment function which will handle assignment and
+      // possibly will call this function again
+      nextNode(code, TK_Index);
+      parseAssignment(code, TK_Index);
+      // data will be assigned here and will call parseTerm again so,
+      // if same assignment situation comes again and again it will do recursion
+      // calls else checks other option and when reached Token_EOF, it returns
+      parseTerm(code, TK_Index);
+
+    } else {
+      // throw error cause if not =, token doesnot make sense
+    }
   }
 
   return node;
@@ -183,7 +217,7 @@ ASTNode *parseCode(const char *code, int *const TK_Index) {
     // int a = 1 + 2
     // int func1 (){}
     // So, chaining nodes up to third token
-    ast = malloc(10000 * sizeof(size_t));
+    ast = malloc(10000 * (sizeof(size_t) * 2));
     node = parseTerm(code, TK_Index);
 
   } else if (current_token.type ==
