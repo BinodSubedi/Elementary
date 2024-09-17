@@ -1,6 +1,7 @@
 #include "../includes/lexer.h"
 #include <aio.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -53,17 +54,101 @@ void parseCFuntionParenInternals() { // Its Call function paren internals,means
 
 //************************************************
 
-void parseExpressionParenInternals() { // like with int a = (2+3)/3, here in
-                                       // this expression 2+3 is handled here
+void parseExpressionParenInternals(
+    const char *code, int *const TK_Index, ASTNode *chainedNode,
+    ASTNode *latestNode) { // like with int a = (2+3/3)/3, here in
+  // char parenStack[33] = "";
+  //
+  // int headIdx = 32;
+  // parenStack[headIdx--] = '(';
+  nextNode(code, TK_Index);
+  while (current_token.type != Token_RParen) {
+
+    if (current_token.type == Token_LParen) {
+      parseExpressionParenInternals(code, TK_Index, chainedNode, latestNode);
+    } else if (current_token.type == Token_Number ||
+               strchr("+-*", current_token.value[0])) {
+
+      // Just append to the chained node
+
+    } else if (strchr("/", current_token.value[0])) {
+      // here we are saving time and just operate on the item as soon as we see
+      // divide
+
+      nextNode(code, TK_Index);
+      if (current_token.type == Token_Number) {
+
+        char *endptr;
+
+        int divider = strtol(current_token.value, &endptr, 10);
+        int divisor = strtol(latestNode->val, &endptr, 10);
+
+        if (*endptr == '\0') {
+          int finalVal = divisor / divider;
+          snprintf(latestNode->val, sizeof(latestNode->val), "%d", finalVal);
+        }
+
+      } else {
+        // throw out error
+      }
+
+    } else if (current_token.type == Token_RParen) {
+
+      // here chain through every node and first find divide and then multiply
+      // step wise
+    }
+  }
 
   ASTNode *node = malloc(sizeof(ASTNode));
 };
 
 void parseAssignment(const char *code, int *const TK_Index) {
+  // we will mantain a node chain
+  // but wont connect to main ast tree until we simplify all expression to
+  // + and -
+  // DONOT FORGET to conncect to main ast tree
+
+  // best approach here seems like tower of hanoi or something, at least use of
+  // stack to figure out processing
+
   ASTNode *node = malloc(sizeof(ASTNode));
+  ASTNode *latestNode;
 
   // Here I probably have to check up with presence of bracket and
   // step by step simplify / and * expression into just + and - expression
+
+  while (current_token.type != Token_SemiColon) {
+
+    if (current_token.type == Token_LParen) {
+      parseExpressionParenInternals(code, TK_Index, node, latestNode);
+    } else if (current_token.type == Token_Number ||
+               current_token.type == Token_Operator) {
+      // Just append to the chain node and finally out of while loop
+      // do the divide first and multiply second, step wise
+    }
+  }
+
+  /*
+  if (current_token.type == Token_LParen) {
+    nextNode(code, TK_Index);
+
+  } else if (current_token.type == Token_Number) {
+
+    //
+
+  } else if (current_token.type == Token_String) {
+    // concate String
+  }
+
+  // after checking everything
+
+  if (current_token.type == Token_SemiColon) {
+    nextNode(code, TK_Index);
+
+  } else {
+    // error, code line not ended here
+  }
+  */
 };
 
 //************************************************
