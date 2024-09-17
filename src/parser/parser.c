@@ -45,6 +45,15 @@ void nextNode(const char *code, int *const TK_Index) {
   current_token = getNextToken(code, TK_Index);
 }
 
+ASTNode *createNode() {
+
+  ASTNode *node = malloc(sizeof(ASTNode));
+
+  node->left = node->right = NULL;
+
+  return node;
+};
+
 // we will do this later, first let's see if everthing initially works or not
 void parseCFuntionParenInternals() { // Its Call function paren internals,means
                                      // when
@@ -55,21 +64,30 @@ void parseCFuntionParenInternals() { // Its Call function paren internals,means
 //************************************************
 
 void parseExpressionParenInternals(
-    const char *code, int *const TK_Index, ASTNode *chainedNode,
+    const char *code, int *const TK_Index,
     ASTNode *latestNode) { // like with int a = (2+3/3)/3, here in
-  // char parenStack[33] = "";
   //
-  // int headIdx = 32;
-  // parenStack[headIdx--] = '(';
+
+  ASTNode *stackTopNode = latestNode;
   nextNode(code, TK_Index);
   while (current_token.type != Token_RParen) {
 
     if (current_token.type == Token_LParen) {
-      parseExpressionParenInternals(code, TK_Index, chainedNode, latestNode);
+      parseExpressionParenInternals(code, TK_Index, latestNode);
     } else if (current_token.type == Token_Number ||
                strchr("+-*", current_token.value[0])) {
 
       // Just append to the chained node
+      if (strcmp(latestNode->val, "start") != 0) {
+        ASTNode *newNode = createNode();
+
+        latestNode->right = newNode;
+        newNode->left = latestNode;
+        latestNode = newNode;
+        strcpy(latestNode->val, current_token.value);
+      }
+
+      strcpy(latestNode->val, current_token.value);
 
     } else if (strchr("/", current_token.value[0])) {
       // here we are saving time and just operate on the item as soon as we see
@@ -85,6 +103,11 @@ void parseExpressionParenInternals(
 
         if (*endptr == '\0') {
           int finalVal = divisor / divider;
+
+          ASTNode *newNode = createNode();
+          latestNode->right = newNode;
+          newNode->left = latestNode;
+          latestNode = newNode;
           snprintf(latestNode->val, sizeof(latestNode->val), "%d", finalVal);
         }
 
@@ -96,10 +119,74 @@ void parseExpressionParenInternals(
 
       // here chain through every node and first find divide and then multiply
       // step wise
-    }
-  }
+      ASTNode *loopingNode = stackTopNode->right;
 
-  ASTNode *node = malloc(sizeof(ASTNode));
+      while (loopingNode->right != NULL) {
+        if (strcmp(loopingNode->val, "/") == 0) {
+          // srink 3 elements to first element and free other two astNode memory
+          // allocation without creating reference after free error
+
+          char *endChar;
+          int neumerator = strtol(loopingNode->left->val, &endChar, 10);
+          int denominator = strtol(loopingNode->right->val, &endChar, 10);
+
+          if (*endChar == '\0') {
+
+            int finalVal = neumerator / denominator;
+
+            snprintf(latestNode->val, sizeof(loopingNode->left->val), "%d",
+                     finalVal);
+
+            loopingNode->left->right = loopingNode->right->right;
+            loopingNode->right->right->left = loopingNode->left;
+
+            ASTNode *replacenode = loopingNode->right->right;
+
+            free(loopingNode->right);
+            free(loopingNode);
+
+            loopingNode = replacenode;
+          }
+        }
+
+        loopingNode = loopingNode->right;
+      }
+
+      // For resetting to the top most node to do the multiplication operation
+      loopingNode = stackTopNode->right;
+
+      while (loopingNode->right != NULL) {
+        if (strcmp(loopingNode->val, "*") == 0) {
+          // srink 3 elements to first element and free other two astNode memory
+          // allocation without creating reference after free error
+
+          char *endChar;
+          int neumerator = strtol(loopingNode->left->val, &endChar, 10);
+          int denominator = strtol(loopingNode->right->val, &endChar, 10);
+
+          if (*endChar == '\0') {
+
+            int finalVal = neumerator * denominator;
+
+            snprintf(latestNode->val, sizeof(loopingNode->left->val), "%d",
+                     finalVal);
+
+            loopingNode->left->right = loopingNode->right->right;
+            loopingNode->right->right->left = loopingNode->left;
+
+            ASTNode *replacenode = loopingNode->right->right;
+
+            free(loopingNode->right);
+            free(loopingNode);
+
+            loopingNode = replacenode;
+          }
+        }
+      }
+    }
+
+    // ASTNode *node = malloc(sizeof(ASTNode));
+  }
 };
 
 void parseAssignment(const char *code, int *const TK_Index) {
@@ -108,11 +195,14 @@ void parseAssignment(const char *code, int *const TK_Index) {
   // + and -
   // DONOT FORGET to conncect to main ast tree
 
-  // best approach here seems like tower of hanoi or something, at least use of
-  // stack to figure out processing
+  // best approach here seems like tower of hanoi or something, at least use
+  // of stack to figure out processing
 
   ASTNode *node = malloc(sizeof(ASTNode));
-  ASTNode *latestNode;
+  ASTNode *latestNode = node;
+
+  latestNode->left = latestNode->right = NULL;
+  strcpy(latestNode->val, "start");
 
   // Here I probably have to check up with presence of bracket and
   // step by step simplify / and * expression into just + and - expression
@@ -120,14 +210,88 @@ void parseAssignment(const char *code, int *const TK_Index) {
   while (current_token.type != Token_SemiColon) {
 
     if (current_token.type == Token_LParen) {
-      parseExpressionParenInternals(code, TK_Index, node, latestNode);
+      parseExpressionParenInternals(code, TK_Index, latestNode);
     } else if (current_token.type == Token_Number ||
                current_token.type == Token_Operator) {
-      // Just append to the chain node and finally out of while loop
-      // do the divide first and multiply second, step wise
+      // Just append to the chain node
+      ASTNode *newNode = createNode();
+
+      newNode->left = latestNode;
+      strcpy(newNode->val, current_token.value);
+      latestNode->right = newNode;
     }
   }
 
+  nextNode(code, TK_Index);
+
+  // do the divide first and multiply second, step wise
+
+  ASTNode *loopingNode = node;
+
+  while (loopingNode->right != NULL) {
+    if (strcmp(loopingNode->val, "/") == 0) {
+      // srink 3 elements to first element and free other two astNode memory
+      // allocation without creating reference after free error
+
+      char *endChar;
+      int neumerator = strtol(loopingNode->left->val, &endChar, 10);
+      int denominator = strtol(loopingNode->right->val, &endChar, 10);
+
+      if (*endChar == '\0') {
+
+        int finalVal = neumerator / denominator;
+
+        snprintf(latestNode->val, sizeof(loopingNode->left->val), "%d",
+                 finalVal);
+
+        loopingNode->left->right = loopingNode->right->right;
+        loopingNode->right->right->left = loopingNode->left;
+
+        ASTNode *replacenode = loopingNode->right->right;
+
+        free(loopingNode->right);
+        free(loopingNode);
+
+        loopingNode = replacenode;
+      }
+    }
+
+    loopingNode = loopingNode->right;
+  }
+
+  // For resetting to the top most node to do the multiplication operation
+  loopingNode = node;
+
+  while (loopingNode->right != NULL) {
+    if (strcmp(loopingNode->val, "*") == 0) {
+      // srink 3 elements to first element and free other two astNode memory
+      // allocation without creating reference after free error
+
+      char *endChar;
+      int neumerator = strtol(loopingNode->left->val, &endChar, 10);
+      int denominator = strtol(loopingNode->right->val, &endChar, 10);
+
+      if (*endChar == '\0') {
+
+        int finalVal = neumerator * denominator;
+
+        snprintf(latestNode->val, sizeof(loopingNode->left->val), "%d",
+                 finalVal);
+
+        loopingNode->left->right = loopingNode->right->right;
+        loopingNode->right->right->left = loopingNode->left;
+
+        ASTNode *replacenode = loopingNode->right->right;
+
+        free(loopingNode->right);
+        free(loopingNode);
+
+        loopingNode = replacenode;
+      }
+    }
+  }
+
+  //***************************
   /*
   if (current_token.type == Token_LParen) {
     nextNode(code, TK_Index);
@@ -246,9 +410,9 @@ ASTNode *parseTerm(const char *code, int *const TK_Index) {
       // parseLBracesInternal Function
 
       nextNode(code, TK_Index);
-      // Don't need to do below because we already have pointer to the newNode2
-      // in [struct AST] ast tail
-      // newNode2->right = parseLFuntionParenInternals(code, TK_Index);
+      // Don't need to do below because we already have pointer to the
+      // newNode2 in [struct AST] ast tail newNode2->right =
+      // parseLFuntionParenInternals(code, TK_Index);
       parseLFuntionParenInternals(code, TK_Index);
       // after calling this, we can run parseTerm again
       parseTerm(code, TK_Index);
@@ -280,8 +444,9 @@ ASTNode *parseTerm(const char *code, int *const TK_Index) {
       nextNode(code, TK_Index);
       parseAssignment(code, TK_Index);
       // data will be assigned here and will call parseTerm again so,
-      // if same assignment situation comes again and again it will do recursion
-      // calls else checks other option and when reached Token_EOF, it returns
+      // if same assignment situation comes again and again it will do
+      // recursion calls else checks other option and when reached Token_EOF,
+      // it returns
       parseTerm(code, TK_Index);
 
     } else {
