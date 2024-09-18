@@ -2,11 +2,13 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static bool isKeyword(const char *val) {
   if (strcmp(val, "int") == 0 || strcmp(val, "u8") == 0 ||
-      strcmp(val, "print") == 0 || strcmp(val, "main") == 0) {
+      strcmp(val, "print") == 0 || strcmp(val, "main") == 0 ||
+      strcmp(val, "void") == 0) {
     return true;
   }
 
@@ -36,10 +38,11 @@ static bool isOperator(const char *val) {
   return false;
 }
 
-Token getNextToken(const char *code,
-                   int *const TK_Index) { // TK_Index is the starting index for
-                                          // new token initialized from 0
-  Token token;
+Token *getNextToken(const char *code,
+                    int *const TK_Index) { // TK_Index is the starting index for
+                                           // new token initialized from 0
+  Token *token;
+  token = malloc(sizeof(Token));
 
   if (code[*TK_Index] != '\0') { // As this situation will not happen, we always
     // check for len end while asking for next token
@@ -47,6 +50,8 @@ Token getNextToken(const char *code,
       *TK_Index = *TK_Index + 1;
       continue;
     }
+  } else {
+    return NULL;
   }
 
   switch (code[*TK_Index]) {
@@ -55,73 +60,73 @@ Token getNextToken(const char *code,
   case '=':
     val[0] = '=';
     val[1] = '\0';
-    token.type = Token_Assign;
-    strcpy(token.value, val);
+    token->type = Token_Assign;
+    strcpy(token->value, val);
     *TK_Index = *TK_Index + 1;
-    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
-           token.value, *TK_Index);
+    printf("token->type: %d\n token->value: %s\n tk_index:%d\n", token->type,
+           token->value, *TK_Index);
     return token;
     break;
   case '(':
     val[0] = '(';
     val[1] = '\0';
-    token.type = Token_LParen;
-    strcpy(token.value, val);
+    token->type = Token_LParen;
+    strcpy(token->value, val);
     *TK_Index = *TK_Index + 1;
-    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
-           token.value, *TK_Index);
+    printf("token->type: %d\n token->value: %s\n tk_index:%d\n", token->type,
+           token->value, *TK_Index);
     return token;
 
     break;
   case ')':
     val[0] = ')';
     val[1] = '\0';
-    token.type = Token_RParen;
-    strcpy(token.value, val);
+    token->type = Token_RParen;
+    strcpy(token->value, val);
     *TK_Index = *TK_Index + 1;
-    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
-           token.value, *TK_Index);
+    printf("token->type: %d\n token->value: %s\n tk_index:%d\n", token->type,
+           token->value, *TK_Index);
     return token;
 
     break;
   case '{':
     val[0] = '{';
     val[1] = '\0';
-    token.type = Token_LBraces;
-    strcpy(token.value, val);
+    token->type = Token_LBraces;
+    strcpy(token->value, val);
     *TK_Index = *TK_Index + 1;
-    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
-           token.value, *TK_Index);
+    printf("token->type: %d\n token->value: %s\n tk_index:%d\n", token->type,
+           token->value, *TK_Index);
     return token;
     break;
   case '}':
     val[0] = '}';
     val[1] = '\0';
-    token.type = Token_RBraces;
-    strcpy(token.value, val);
+    token->type = Token_RBraces;
+    strcpy(token->value, val);
     *TK_Index = *TK_Index + 1;
-    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
-           token.value, *TK_Index);
+    printf("token->type: %d\n token->value: %s\n tk_index:%d\n", token->type,
+           token->value, *TK_Index);
     return token;
     break;
   case ',':
     val[0] = ',';
     val[1] = '\0';
-    token.type = Token_Comma;
-    strcpy(token.value, val);
+    token->type = Token_Comma;
+    strcpy(token->value, val);
     *TK_Index = *TK_Index + 1;
-    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
-           token.value, *TK_Index);
+    printf("token->type: %d\n token->value: %s\n tk_index:%d\n", token->type,
+           token->value, *TK_Index);
     return token;
     break;
   case ';':
     val[0] = ';';
     val[1] = '\0';
-    token.type = Token_SemiColon;
-    strcpy(token.value, val);
+    token->type = Token_SemiColon;
+    strcpy(token->value, val);
     *TK_Index = *TK_Index + 1;
-    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
-           token.value, *TK_Index);
+    printf("token->type: %d\n token->value: %s\n tk_index:%d\n", token->type,
+           token->value, *TK_Index);
     return token;
     break;
   }
@@ -141,11 +146,11 @@ Token getNextToken(const char *code,
 
     val[endPos + 1] = '\0';
 
-    token.type = identifierKeywordFilter(val);
-    strcpy(token.value, val);
+    token->type = identifierKeywordFilter(val);
+    strcpy(token->value, val);
 
-    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
-           token.value, *TK_Index);
+    printf("token->type: %d\n token->value: %s\n tk_index:%d\n", token->type,
+           token->value, *TK_Index);
     return token;
   }
 
@@ -164,12 +169,13 @@ Token getNextToken(const char *code,
 
     val[endPos + 1] = '\0';
 
-    token.type = Token_Number;
-    strcpy(token.value, val);
+    token->type = Token_Number;
+    strcpy(token->value, val);
 
-    printf("token type: %d\n token value: %s\n tk_index:%d\n", token.type,
-           token.value, *TK_Index);
-    return token;
+    printf("token->type: %d\n token->value: %s\n tk_index:%d\n size of "
+           "token::%d\n",
+           token->type, token->value, *TK_Index, (int)sizeof(token->value));
+    // return token;
   }
 
   return token;

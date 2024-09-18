@@ -7,7 +7,9 @@ typedef enum {
   Token_FunctionKeyword, // By function I mean internal elements like print,
                          // format, max, min etc
   Token_LabelKeyword, // Label means userCreated function name like add(1,2) or
-                      // similar
+  // similar
+
+  Token_FunctionParam,
   Token_ReturnKeyword,
   Token_MainFunction,
   Token_Number,
@@ -29,6 +31,6 @@ typedef struct {
   char value[16];
 } Token;
 
-Token getNextToken(const char *code, int *const TK_Index);
+Token *getNextToken(const char *code, int *const TK_Index);
 
 #endif // !Lexer
