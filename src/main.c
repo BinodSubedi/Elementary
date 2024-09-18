@@ -14,14 +14,8 @@ int main(int argsNum, char *args[]) {
 
     codeBlock = malloc(1000);
 
-    //*codeBlock = "void main(int b){int a = 12;}";
-    strcpy(codeBlock, "void main(){int b = 10;}");
+    strcpy(codeBlock, "void main(int b){int a = 10;}");
 
-    /*
-    while (strcmp(&code[a], "\0") != 0) {
-      getNextToken(code, &a);
-    }
-    */
     parseCode(codeBlock);
   }
 

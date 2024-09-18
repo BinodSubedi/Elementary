@@ -1,5 +1,4 @@
 #include "../includes/parser.h"
-#include <aio.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>

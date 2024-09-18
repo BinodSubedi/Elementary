@@ -8,7 +8,7 @@
 static bool isKeyword(const char *val) {
   if (strcmp(val, "int") == 0 || strcmp(val, "u8") == 0 ||
       strcmp(val, "print") == 0 || strcmp(val, "main") == 0 ||
-      strcmp(val, "void") == 0) {
+      strcmp(val, "void") == 0 || strcmp(val, "return") == 0) {
     return true;
   }
 
@@ -50,9 +50,10 @@ Token *getNextToken(const char *code,
       *TK_Index = *TK_Index + 1;
       continue;
     }
-  } else {
-    return NULL;
   }
+  // else {
+  //  return NULL;
+  //}
 
   switch (code[*TK_Index]) {
     char val[16];
@@ -144,7 +145,7 @@ Token *getNextToken(const char *code,
       val[endPos - startPos] = code[endPos];
     }
 
-    val[endPos + 1] = '\0';
+    val[endPos - startPos + 1] = '\0';
 
     token->type = identifierKeywordFilter(val);
     strcpy(token->value, val);
@@ -165,17 +166,17 @@ Token *getNextToken(const char *code,
       endPos++;
       *TK_Index = *TK_Index + 1;
       val[endPos - startPos] = code[endPos];
+      printf("loopy");
     }
 
-    val[endPos + 1] = '\0';
+    val[endPos - startPos + 1] = '\0';
 
     token->type = Token_Number;
     strcpy(token->value, val);
 
-    printf("token->type: %d\n token->value: %s\n tk_index:%d\n size of "
-           "token::%d\n",
-           token->type, token->value, *TK_Index, (int)sizeof(token->value));
-    // return token;
+    // printf("token->type: %d\n token->value: %s\n tk_index:%d\n", token->type,
+    //      token->value, *TK_Index);
+    return token;
   }
 
   return token;
