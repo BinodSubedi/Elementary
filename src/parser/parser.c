@@ -527,6 +527,53 @@ void parseTerm(int *TK_Index) {
     } else {
       // throw error cause if not =, token doesnot make sense
     }
+  } else if (current_token->type == Token_ReturnKeyword) {
+
+    ASTNode *node = createNode();
+
+    strcpy(node->val, current_token->value);
+
+    node->type = current_token->type;
+
+    node->left = ast->tail;
+    ast->tail->right = node;
+    ast->tail = node;
+    nextNode();
+
+    printf("vaLUe::%s\n type::%d", current_token->value, current_token->type);
+
+    // we just add Token_Identifier here too if exists
+
+    if (current_token->type == Token_Identifier) {
+
+      ASTNode *node = createNode();
+
+      strcpy(node->val, current_token->value);
+
+      node->type = current_token->type;
+
+      node->left = ast->tail;
+      ast->tail->right = node;
+      ast->tail = node;
+      nextNode();
+
+      parseTerm(TK_Index);
+      return;
+    } else {
+      // error Code
+    }
+
+  } else if (current_token->type == Token_SemiColon) {
+
+    nextNode();
+
+    printf("----yellow-----\n");
+
+    if (current_token->type == Token_RBraces) {
+      nextNode();
+      parseTerm(TK_Index);
+      return;
+    }
   }
 };
 

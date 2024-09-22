@@ -14,7 +14,7 @@ int main(int argsNum, char *args[]) {
 
     codeBlock = malloc(1000);
 
-    strcpy(codeBlock, "void main(int b){int a = 10;}");
+    strcpy(codeBlock, "void main(int b){int a = 10; int b = 5; return a;}");
 
     parseCode(codeBlock);
   }
